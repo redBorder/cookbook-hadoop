@@ -1,4 +1,4 @@
-# example Cookbook
+# hadoop Cookbook
 
 cookbook to install and configure hadoop cookbook
 
