@@ -25,8 +25,31 @@ action :add do
 end
 
 action :remove do
-     # ... your code here ...
-     Chef::Log.info("Hadoop Nodemanager cookbook has been processed")
+    parent_config_dir = "/etc/hadoop"
+    config_dir = "#{parent_config_dir}/nodemanager"
+    parent_log_dir = new_resource.parent_log_dir
+    suffix_log_dir = new_resource.suffix_log_dir
+    log_dir = "#{parent_log_dir}/#{suffix_log_dir}"
+
+    service "hadoop-nodemanager" do
+      supports :status => true, :start => true, :restart => true, :reload => true
+      action [:disable,:stop]
+    end
+
+    dir_list = [
+                 config_dir,
+                 log_dir
+               ]
+
+    # removing directories
+    dir_list.each do |dirs|
+      directory dirs do
+        action :delete
+        recursive true
+      end
+    end
+
+    Chef::Log.info("Hadoop Nodemanager cookbook has been processed")
   rescue => e
     Chef::Log.error(e.message)
   end

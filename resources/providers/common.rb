@@ -108,10 +108,20 @@ action :add do #Usually used to install and configure something
   end
 end
 
-action :remove do #Usually used to uninstall something
+action :remove do
   begin
-     # ... your code here ...
-     Chef::Log.info("Hadoop cookbook (common) has been processed")
+    parent_config_dir = "/etc/hadoop"
+    parent_log_dir = new_resource.parent_log_dir
+
+    directory "#{parent_config_dir}" do
+      recursive true
+      action :delete
+    end
+
+    # Remove parent log directory if it doesn't have childs
+    delete_if_empty(parent_log_dir)
+
+    Chef::Log.info("Hadoop cookbook (common) has been processed")
   rescue => e
     Chef::Log.error(e.message)
   end

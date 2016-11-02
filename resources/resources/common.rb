@@ -14,3 +14,4 @@ attribute :containersMemory, :kind_of => Integer
 attribute :s3_bucket, :kind_of => String
 attribute :s3_access_key, :kind_of => String
 attribute :s3_secret_key, :kind_of => String
+attribute :parent_log_dir, :kind_of => String, :default => "/var/log/hadoop"
