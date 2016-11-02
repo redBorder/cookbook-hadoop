@@ -40,7 +40,7 @@ action :register do
       query["ID"] = "hadoop-resourcemanager-#{node["hostname"]}"
       query["Name"] = "hadoop-resourcemanager"
       query["Address"] = "#{node["ipaddress"]}"
-      query["Port"] = 8080 #CHANGE
+      query["Port"] = 8032 
       json_query = Chef::JSONCompat.to_json(query)
 
       execute 'Register service in consul' do

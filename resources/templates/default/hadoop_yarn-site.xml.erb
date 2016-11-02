@@ -1,0 +1,198 @@
+<?xml version="1.0"?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+implied.
+  See the License for the specific language governing permissions and
+  limitations under the License. See accompanying LICENSE file.
+-->
+
+<configuration>
+  <property>
+    <name>yarn.nodemanager.sleep-delay-before-sigkill.ms</name>
+    <value>300000</value>
+  </property>
+  <property>
+    <name>yarn.scheduler.minimum-allocation-mb</name>
+    <value>1024</value>
+  </property>
+  <property>
+    <name>yarn.resourcemanager.bind-host</name>
+    <value>0.0.0.0</value>
+  </property>
+  <property>
+    <name>yarn.nodemanager.bind-host</name>
+    <value>0.0.0.0</value>
+  </property>
+<% if @resourcemanager_managers.size > 1 %>
+  <property>
+    <name>yarn.resourcemanager.ha.enabled</name>
+    <value>true</value>
+  </property>
+  <property>
+    <name>yarn.resourcemanager.work-preserving-recovery.enabled</name>
+    <value>false</value>
+  </property>
+  <property>
+    <name>yarn.resourcemanager.cluster-id</name>
+    <value><%= @cdomain %></value>
+  </property>
+  <property>
+    <name>yarn.resourcemanager.recovery.enabled</name>
+    <value>true</value>
+  </property>
+  <property>
+    <name>yarn.resourcemanager.store.class</name>
+    <value>org.apache.hadoop.yarn.server.resourcemanager.recovery.ZKRMStateStore</value>
+  </property>
+  <property>
+    <name>yarn.resourcemanager.ha.automatic-failover.embedded</name>
+    <value>true</value>
+  </property>
+  <property>
+    <name>yarn.resourcemanager.ha.automatic-failover.enabled</name>
+    <value>true</value>
+  </property>
+  <property>
+    <name>yarn.resourcemanager.ha.rm-ids</name>
+<%
+  rms=[]
+  @resourcemanager_managers.each_with_index do |x, index|
+    rms << "rm#{(index+1)}"
+  end
+%>
+    <value><%= rms.join(",") %></value>
+  </property>
+<% @resourcemanager_managers.map{|x| x.name }.each_with_index do |name, index| %>
+  <property>
+    <name>yarn.resourcemanager.hostname.rm<%= (index+1) %></name>
+    <value><%= name %>.<%= @cdomain %></value>
+  </property>
+<% [ {:property => "yarn.nodemanager.webapp.address", :port =>8042}, {:property => "yarn.resourcemanager.webapp.address", :port => 8021}, {:property => "yarn.resourcemanager.address", :port => 8032}, {:property => "yarn.resourcemanager.scheduler.address", :port => 8030 }, {:property => "yarn.resourcemanager.resource-tracker.address", :port => 8025}, {:property => "yarn.resourcemanager.admin.address", :port => 8033 } ].each do |x| %>
+  <property>
+    <name><%= x[:property] %>.rm<%= (index+1) %></name>
+    <value><%= name %>.<%= @cdomain %>:<%= x[:port] %></value>
+  </property>
+<% end %>
+<% end %>
+  <property>
+    <name>yarn.resourcemanager.zk-address</name>
+    <value><%= @zk_hosts %></value>
+  </property>
+<% end %>
+  <property>
+    <name>yarn.scheduler.maximum-allocation-mb</name>
+    <value><%= 4 * @containersMemory.to_i %></value> <!-- CHANGE -->
+  </property>
+  <property>
+    <name>yarn.nodemanager.resource.cpu-vcores</name>
+    <value><%= ([ node["cpu"]["total"].to_i-1, 1 ].max).to_i %></value>
+  </property>
+  <property>
+    <name>yarn.nodemanager.resource.memory-mb</name>
+    <value><%= @yarnMemory.to_i %></value>
+  </property>
+  <property>
+    <name>yarn.nodemanager.aux-services</name>
+    <value>mapreduce_shuffle</value>
+  </property>
+<% [ {:property => "yarn.nodemanager.webapp.address", :port =>8042}, {:property => "yarn.resourcemanager.webapp.address", :port => 8021}, {:property => "yarn.resourcemanager.address", :port => 8032}, {:property => "yarn.resourcemanager.scheduler.address", :port => 8030 }, {:property => "yarn.resourcemanager.resource-tracker.address", :port => 8025}, {:property => "yarn.resourcemanager.admin.address", :port => 8033 } ].each do |x| %>
+  <property>
+    <name><%= x[:property] %></name>
+    <value>hadoopresourcemanager.<%= @cdomain %>:<%= x[:port] %></value>
+  </property>
+<% end %>
+<% [ {:property => "yarn.nodemanager.address", :port => 0 }, {:property => "yarn.nodemanager.localizer.address", :port => 8040 } ].each do |x| %>
+  <property>
+    <name><%= x[:property] %></name>
+    <value><%= node.name %>.<%= @cdomain %>:<%= x[:port] %></value>
+  </property>
+<% end %>
+  <property>
+    <name>yarn.nodemanager.remote-app-log-dir</name>
+    <value>/var/log/hadoop</value>
+  </property>
+  <property>
+    <name>yarn.nodemanager.local-dirs</name>
+    <value>/var/lib/hadoop/yarn</value>
+  </property>
+  <property>
+    <name>yarn.nodemanager.health-checker.interval-ms</name>
+    <value>135000</value>
+  </property>
+  <property>
+    <name>yarn.application.classpath</name>
+    <value>/opt/rb/var/hadoop/etc/hadoop,/opt/rb/var/hadoop/share/hadoop/common/*,/opt/rb/var/hadoop/share/hadoop/common/lib/*,/opt/rb/var/hadoop/share/hadoop/hdfs/*,/opt/rb/var/hadoop/share/hadoop/hdfs/lib/*,/opt/rb/var/hadoop/share/hadoop/mapreduce/*,/opt/rb/var/hadoop/share/hadoop/mapreduce/lib/*,/opt/rb/var/hadoop/share/hadoop/hadoop-mapreduce/*,/opt/rb/var/hadoop/share/hadoop/yarn/*,/opt/rb/var/hadoop/share/hadoop/yarn/lib/*,/opt/rb/var/hadoop/share/hadoop/hadoop-yarn/*</value>
+  </property>
+  <property>
+    <name>yarn.nodemanager.linux-container-executor.group</name>
+    <value>root</value>
+  </property>
+  <property>
+    <name>yarn.resourcemanager.scheduler.class</name>
+    <value>org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler</value>
+  </property>
+  <property>
+    <name>yarn.nodemanager.address</name>
+    <value><%= node.name %>.<%= node["redBorder"]["cdomain"] %>:45454</value>
+  </property>
+  <property>
+    <name>yarn.nodemanager.delete.debug-delay-sec</name>
+    <value>600</value>
+  </property>
+  <property>
+    <name>yarn.resourcemanager.hostname</name>
+    <value>hadoopresourcemanager.<%= @cdomain %></value>
+  </property>
+  <property>
+    <name>yarn.nodemanager.remote-app-log-dir-suffix</name>
+    <value>logs</value>
+  </property>
+  <property>
+    <name>yarn.nodemanager.log-dirs</name>
+    <value>/var/log/hadoop/nodemanager</value>
+  </property>
+  <property>
+    <name>yarn.log-aggregation.retain-seconds</name>
+    <value>2592000</value>
+  </property>
+  <property>
+    <name>yarn.nodemanager.log.retain-second</name>
+    <value>604800</value>
+  </property>
+  <property>
+    <name>yarn.log.server.url</name>
+    <value>http://hadoopresourcemanager.<%= @cdomain %>:19888/jobhistory/logs</value>
+  </property>
+  <property>
+    <name>yarn.nodemanager.health-checker.script.timeout-ms</name>
+    <value>60000</value>
+  </property>
+  <property>
+    <name>yarn.log-aggregation-enable</name>
+    <value>false</value>
+  </property>
+  <property>
+    <name>yarn.nodemanager.container-monitor.interval-ms</name>
+    <value>3000</value>
+  </property>
+  <property>
+    <name>yarn.nodemanager.log-aggregation.compression-type</name>
+    <value>gz</value>
+  </property>
+  <property>
+    <name>yarn.nodemanager.vmem-pmem-ratio</name>
+    <value>10</value>
+  </property>
+  <property>
+    <name>yarn.admin.acl</name>
+    <value>*</value>
+  </property>
+</configuration>
