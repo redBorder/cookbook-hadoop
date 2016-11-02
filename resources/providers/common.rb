@@ -11,15 +11,66 @@ action :add do #Usually used to install and configure something
     yarnMemory = new_resource.yarnMemory
     containersMemory = new_resource.containersMemory
     cdomain = node["redborder"]["cdomain"]
+    s3_bucket = new_resource.s3_bucket
+    s3_access_key = new_resource.s3_access_key
+    s3_secret_key = new_resource.s3_secret_key
+
+    ####################
+    # HADOOP SERVICES
+    #################### 
+
+    service "hadoop-nodemanager" do
+      supports :status => true, :start => true, :restart => true, :reload => true
+      action :nothing
+    end
+
+    service "hadoop-resourcemanager" do
+      supports :status => true, :start => true, :restart => true, :reload => true
+      action :nothing
+    end
+
+    service "hadoop-zkfc" do
+      supports :status => true, :start => true, :restart => true, :reload => true
+      action :nothing
+    end
+
+    ####################
+    # READ DATABAGS
+    ####################
+
+    #Obtaining s3 data
+    s3 = Chef::DataBagItem.load("passwords", "s3") rescue s3 = {}
+    if !s3.empty?
+      s3_bucket = s3["s3_bucket"]
+      s3_access_key = s3["s3_access_key_id"]
+      s3_secret_key = s3["s3_secret_key_id"]
+    end
+
+    ####################
+    # TEMPLATES
+    ####################
+
+    template "/etc/hadoop/core-site.xml" do
+        source "hadoop_core-site.xml.erb"
+        owner "root"
+        group "root"
+        cookbook "hadoop"
+        mode 0644
+        retries 2
+        variables(:zk_hosts => zookeeper_hosts)
+        notifies node["redborder"]["services"]["hadoop-zkfc"] ? :restart : :nothing, 'service[hadoop-zkfc]', :delayed
+    end
 
     template "/etc/hadoop/mapred-site.xml" do
         source "hadoop_mapred-site.xml.erb"
         owner "root"
         group "root"
+        cookbook "hadoop"
         mode 0644
         retries 2
-        variables(:key_id => s3_secrets['key_id'], :key_secret => s3_secrets['key_secret'],
-                  :memory_kb_nodemanager => memory_kb_nodemanager )
+        variables(:containersMemory => containersMemory,
+                  :memory_kb_nodemanager => memory_kb_nodemanager,
+                  :cdomain => cdomain)
         notifies node["redborder"]["services"]["hadoop-zkfc"] ? :restart : :nothing, 'service[hadoop-zkfc]', :delayed
     end
 
@@ -27,23 +78,25 @@ action :add do #Usually used to install and configure something
        source "hadoop_yarn-site.xml.erb"
        owner "root"
        group "root"
+       cookbook "hadoop"
        mode 0644
        retries 2
        variables(:zk_hosts => zookeeper_hosts,
                  :resourcemanager_managers => node["redborder"]["managers_per_services"]["hadoop-resourcemanager"],
-                 :cdomain => cdomain, :yarnMemory => yarnMemory)
+                 :cdomain => cdomain,
+                 :yarnMemory => yarnMemory)
        notifies node["redborder"]["services"]["hadoop-nodemanager"] ? :restart : :nothing, 'service[hadoop-nodemanager]', :delayed
        notifies node["redborder"]["services"]["hadoop-resourcemanager"] ? :restart : :nothing, 'service[hadoop-resourcemanager]', :delayed
     end
 
     [ "configuration.xsl", "container-executor.cfg", "hadoop-metrics.properties",
-      "hadoop-metrics2.properties", "hadoop-policy.xml", "httpfs-log4j.properties",
-      "httpfs-signature.secret", "httpfs-site.xml", "log4j.properties", "mapred-queues.xml",
+      "hadoop-metrics2.properties", "hadoop-policy.xml", "log4j.properties", "mapred-queues.xml",
       "hadoop-env.sh", "mapred-env.sh", "yarn-env.sh" ].each do |t|
     template "/opt/rb/etc/hadoop/#{t}" do
         source "hadoop_#{t}.erb"
         owner "root"
         group "root"
+        cookbook "hadoop"
         mode 0644
         retries 2
       end
