@@ -24,6 +24,14 @@ action :add do #Usually used to install and configure something
          notifies node["redborder"]["services"]["hadoop-resourcemanager"] ? :restart : :nothing, 'service[hadoop-resourcemanager]', :delayed
      end
 
+     template "etc/hadoop/hadoop_yarn-env.sh" do
+        source "hadoop_yarn-env.sh.erb"
+        owner "root"
+        group "root"
+        mode 0644
+        retries 2
+     end
+
      Chef::Log.info("Hadoop cookbook (common) has been processed")
   rescue => e
     Chef::Log.error(e.message)
