@@ -36,12 +36,17 @@ action :add do #Usually used to install and configure something
        notifies node["redborder"]["services"]["hadoop-resourcemanager"] ? :restart : :nothing, 'service[hadoop-resourcemanager]', :delayed
     end
 
-    template "etc/hadoop/hadoop_yarn-env.sh" do
-      source "hadoop_yarn-env.sh.erb"
-      owner "root"
-      group "root"
-      mode 0644
-      retries 2
+    [ "configuration.xsl", "container-executor.cfg", "hadoop-metrics.properties",
+      "hadoop-metrics2.properties", "hadoop-policy.xml", "httpfs-log4j.properties",
+      "httpfs-signature.secret", "httpfs-site.xml", "log4j.properties", "mapred-queues.xml",
+      "hadoop-env.sh", "mapred-env.sh", "yarn-env.sh" ].each do |t|
+    template "/opt/rb/etc/hadoop/#{t}" do
+        source "hadoop_#{t}.erb"
+        owner "root"
+        group "root"
+        mode 0644
+        retries 2
+      end
     end
 
     Chef::Log.info("Hadoop cookbook (common) has been processed")
