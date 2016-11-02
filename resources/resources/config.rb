@@ -1,4 +1,4 @@
-# Cookbook Name:: example
+# Cookbook Name:: hadoop
 #
 # Resource:: config
 #

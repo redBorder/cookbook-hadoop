@@ -5,13 +5,18 @@
 
 action :add do
   begin
+    memory_kb = new_resource.memory_kb
 
-
-     template "PATH/template1" do
-       source "template1.erb"
-       cookbook "example"
-       #...
-     end
+    template "/etc/sysconfig/hadoop_zkfc" do
+      source "hadoop_zkfc_sysconfig.erb"
+      owner "root"
+      group "root"
+      cookbook "hadoop"
+      mode 0644
+      retries 2
+      variables(:memory_kb => memory_kb)
+      notifies :restart, 'service[hadoop-zkfc]', :delayed
+    end
 
      Chef::Log.info("Hadoop Zkfc cookbook has been processed")
   rescue => e
@@ -19,7 +24,7 @@ action :add do
   end
 end
 
-action :remove do #Usually used to uninstall something
+action :remove do
   begin
      # ... your code here ...
      Chef::Log.info("Hadoop Zkfc cookbook has been processed")

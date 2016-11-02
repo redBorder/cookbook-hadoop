@@ -7,7 +7,20 @@
 # All rights reserved - Do Not Redistribute
 #
 
-hadoop_config "config" do
-  mystring "test"
+hadoop_nodemanager "Configure nodemanager" do
+  # attributes initialization
+  # ...
+  action :add
+end
+
+hadoop_resourcemanager "Configure resourcemanager" do
+  # attributes initialization
+  # ...
+  action :add
+end
+
+hadoop_zkfc "Configure zkfc" do
+  # attributes initialization
+  # ...
   action :add
 end

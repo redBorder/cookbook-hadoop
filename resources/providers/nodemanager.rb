@@ -5,11 +5,17 @@
 
 action :add do
   begin
+     memory_kb = new_resource.memory_kb
 
-
-     template "PATH/template1" do
-       source "template1.erb"
+     template "/etc/sysconfig/hadoop_nodemanager" do
+       source "hadoop_nodemanager_sysconfig.erb"
+       owner "root"
+       group "root"
        cookbook "hadoop"
+       mode 0644
+       retries 2
+       variables(:memory_kb => memory_kb)
+       notifies :restart, 'service[hadoop-nodemanager]', :delayed
      end
 
      Chef::Log.info("Hadoop Nodemanager cookbook has been processed")
@@ -18,8 +24,7 @@ action :add do
   end
 end
 
-action :remove do #Usually used to uninstall something
-  begin
+action :remove do
      # ... your code here ...
      Chef::Log.info("Hadoop Nodemanager cookbook has been processed")
   rescue => e

@@ -3,14 +3,19 @@
 # Provider:: resourcemanager
 #
 
-action :add do #Usually used to install and configure something
+action :add do
   begin
-     # ... your code here ...
+     memory_kb = new_resource.memory_kb
 
-     template "PATH/template1" do
-       source "template1.erb"
-       cookbook "example"
-       #...
+     template "/etc/sysconfig/hadoop_resourcemanager" do
+       source "hadoop_resourcemanager_sysconfig.erb"
+       owner "root"
+       group "root"
+       cookbook "hadoop"
+       mode 0644
+       retries 2
+       variables(:memory_kb => memory_kb)
+       notifies :restart, 'service[hadoop-resourcemanager]', :delayed
      end
 
      Chef::Log.info("Hadoop ResourceManager cookbook has been processed")
@@ -19,7 +24,7 @@ action :add do #Usually used to install and configure something
   end
 end
 
-action :remove do #Usually used to uninstall something
+action :remove do
   begin
      # ... your code here ...
      Chef::Log.info("Hadoop ResourceManager cookbook has been processed")
