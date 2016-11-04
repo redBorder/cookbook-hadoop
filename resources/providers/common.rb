@@ -89,7 +89,7 @@ action :add do #Usually used to install and configure something
        notifies node["redborder"]["services"]["hadoop-resourcemanager"] ? :restart : :nothing, 'service[hadoop-resourcemanager]', :delayed
     end
 
-    [ "configuration.xsl", "container-executor.cfg", "capacity-scheduler.xml", "hadoop_fair-scheduler.xml"
+    [ "configuration.xsl", "container-executor.cfg", "capacity-scheduler.xml", "hadoop_fair-scheduler.xml",
       "hadoop-metrics.properties", "hadoop-metrics2.properties", "hadoop-policy.xml", "log4j.properties",
       "mapred-queues.xml", "hadoop-env.sh", "mapred-env.sh", "yarn-env.sh" ].each do |t|
     template "/opt/rb/etc/hadoop/#{t}" do

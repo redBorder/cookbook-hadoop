@@ -25,6 +25,7 @@ action :add do
 end
 
 action :remove do
+  begin
     parent_config_dir = "/etc/hadoop"
     config_dir = "#{parent_config_dir}/zkfc"
     parent_log_dir = new_resource.parent_log_dir
