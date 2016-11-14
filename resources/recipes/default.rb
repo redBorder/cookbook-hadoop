@@ -19,8 +19,3 @@ hadoop_resourcemanager "Configure resourcemanager" do
   action :add
 end
 
-hadoop_zkfc "Configure zkfc" do
-  # attributes initialization
-  # ...
-  action :add
-end

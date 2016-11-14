@@ -6,6 +6,14 @@
 action :add do
   begin
      memory_kb = new_resource.memory_kb
+     log_parent_folder = new_resource.log_parent_folder
+     log_folder = "#{log_parent_folder}/nodemanager"
+     
+     directory log_folder do
+       owner "hadoop"
+       group "hadoop"
+       mode 0755
+     end       
 
      template "/etc/sysconfig/hadoop_nodemanager" do
        source "hadoop_nodemanager_sysconfig.erb"
@@ -18,7 +26,12 @@ action :add do
        notifies :restart, 'service[hadoop-nodemanager]', :delayed
      end
 
-     Chef::Log.info("Hadoop Nodemanager cookbook has been processed")
+     service "hadoop-nodemanager" do
+       supports :status => true, :start => true, :restart => true, :reload => true
+       action [:enable,:start]
+     end
+
+     Chef::Log.info("Hadoop cookbook (nodemanager) has been processed")
   rescue => e
     Chef::Log.error(e.message)
   end
@@ -26,31 +39,21 @@ end
 
 action :remove do
   begin
-    parent_config_dir = "/etc/hadoop"
-    config_dir = "#{parent_config_dir}/nodemanager"
-    parent_log_dir = new_resource.parent_log_dir
-    suffix_log_dir = new_resource.suffix_log_dir
-    log_dir = "#{parent_log_dir}/#{suffix_log_dir}"
+    log_parent_folder = new_resource.log_parent_folder
+    log_folder = "#{log_parent_folder}/nodemanager"
 
     service "hadoop-nodemanager" do
       supports :status => true, :start => true, :restart => true, :reload => true
       action [:disable,:stop]
     end
 
-    dir_list = [
-                 config_dir,
-                 log_dir
-               ]
-
-    # removing directories
-    dir_list.each do |dirs|
-      directory dirs do
-        action :delete
-        recursive true
-      end
+    # removing log directory
+    directory log_folder do
+      action :delete
+      recursive true
     end
 
-    Chef::Log.info("Hadoop Nodemanager cookbook has been processed")
+    Chef::Log.info("Hadoop cookbook (nodemanager) has been processed")
   rescue => e
     Chef::Log.error(e.message)
   end

@@ -17,6 +17,11 @@ action :add do
        variables(:memory_kb => memory_kb)
        notifies :restart, 'service[hadoop-resourcemanager]', :delayed
      end
+     
+     service "hadoop-resourcemanager" do
+       supports :status => true, :start => true, :restart => true, :reload => true
+       action [:enable,:start]
+     end
 
      Chef::Log.info("Hadoop ResourceManager cookbook has been processed")
   rescue => e
@@ -26,8 +31,6 @@ end
 
 action :remove do
   begin
-    parent_config_dir = "/etc/hadoop"
-    config_dir = "#{parent_config_dir}/resourcemanager"
     parent_log_dir = new_resource.parent_log_dir
     suffix_log_dir = new_resource.suffix_log_dir
     log_dir = "#{parent_log_dir}/#{suffix_log_dir}"
@@ -36,18 +39,11 @@ action :remove do
       supports :status => true, :start => true, :restart => true, :reload => true
       action [:disable,:stop]
     end
-
-    dir_list = [
-                 config_dir,
-                 log_dir
-               ]
-
-    # removing directories
-    dir_list.each do |dirs|
-      directory dirs do
-        action :delete
-        recursive true
-      end
+    
+    # Cleaning log directory
+    directory log_dir do
+      action :delete
+      recursive true
     end
 
     Chef::Log.info("Hadoop ResourceManager cookbook has been processed")
@@ -63,7 +59,7 @@ action :register do
       query["ID"] = "hadoop-resourcemanager-#{node["hostname"]}"
       query["Name"] = "hadoop-resourcemanager"
       query["Address"] = "#{node["ipaddress"]}"
-      query["Port"] = 8032
+      query["Port"] = 8021
       json_query = Chef::JSONCompat.to_json(query)
 
       execute 'Register service in consul' do
