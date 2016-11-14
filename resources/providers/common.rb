@@ -5,15 +5,23 @@
 
 action :add do #Usually used to install and configure something
   begin
+    name = new_resource.name
     zookeeper_hosts = new_resource.zookeeper_hosts
-    memory_kb_nodemanager = new_resource.memory_kb_nodemanager
-    reservedStackMemory = new_resource.reservedStackMemory
     yarnMemory = new_resource.yarnMemory
     containersMemory = new_resource.containersMemory
+    link_conf_folder = new_resource.link_conf_folder
+    log_parent_folder = new_resource.log_parent_folder
     cdomain = node["redborder"]["cdomain"]
-    s3_bucket = new_resource.s3_bucket
-    s3_access_key = new_resource.s3_access_key
-    s3_secret_key = new_resource.s3_secret_key
+    conf_folder = "/usr/lib/hadoop/etc/hadoop"
+
+    ##########################
+    #HADOOP INSTALLATION
+    ##########################
+    
+    yum_package "hadoop" do
+      action :upgrade
+      flush_cache [:before]
+    end
 
     ####################
     # HADOOP SERVICES
@@ -34,23 +42,32 @@ action :add do #Usually used to install and configure something
       action :nothing
     end
 
-    ####################
-    # READ DATABAGS
-    ####################
+    ###################################
+    # DIRECTORY STRUCTURE CREATION
+    ##################################
 
-    #Obtaining s3 data
-    s3 = Chef::DataBagItem.load("passwords", "s3") rescue s3 = {}
-    if !s3.empty?
-      s3_bucket = s3["s3_bucket"]
-      s3_access_key = s3["s3_access_key_id"]
-      s3_secret_key = s3["s3_secret_key_id"]
+    link link_conf_folder do
+      to conf_folder
+      link_type :symbolic
+    end
+ 
+    directory log_parent_folder do 
+      owner "hadoop"
+      group "hadoop"
+      mode 0755
+    end
+ 
+    directory "/var/lib/hadoop" do
+      owner "hadoop"
+      group "hadoop"
+      mode 755
     end
 
     ####################
     # TEMPLATES
     ####################
 
-    template "/etc/hadoop/core-site.xml" do
+    template "#{conf_folder}/core-site.xml" do
         source "hadoop_core-site.xml.erb"
         owner "root"
         group "root"
@@ -58,50 +75,26 @@ action :add do #Usually used to install and configure something
         mode 0644
         retries 2
         variables(:zk_hosts => zookeeper_hosts)
-        notifies node["redborder"]["services"]["hadoop-zkfc"] ? :restart : :nothing, 'service[hadoop-zkfc]', :delayed
+        notifies node["redborder"]["services"]["hadoop-resourcemanager"] ? :restart : :nothing, 'service[hadoop-resourcemanager]', :delayed
+        notifies node["redborder"]["services"]["hadoop-nodemanager"] ? :restart  : :nothing, 'service[hadoop-nodemanager]', :delayed
     end
 
-    template "/etc/hadoop/mapred-site.xml" do
-        source "hadoop_mapred-site.xml.erb"
-        owner "root"
-        group "root"
-        cookbook "hadoop"
-        mode 0644
-        retries 2
-        variables(:containersMemory => containersMemory,
-                  :memory_kb_nodemanager => memory_kb_nodemanager,
-                  :cdomain => cdomain)
-        notifies node["redborder"]["services"]["hadoop-zkfc"] ? :restart : :nothing, 'service[hadoop-zkfc]', :delayed
-    end
-
-    template "/etc/hadoop/yarn-site.xml" do
+    template "#{conf_folder}/yarn-site.xml" do
        source "hadoop_yarn-site.xml.erb"
        owner "root"
        group "root"
        cookbook "hadoop"
        mode 0644
        retries 2
-       variables(:zk_hosts => zookeeper_hosts,
+       variables(:name => name,
+                 :zk_hosts => zookeeper_hosts,
                  :resourcemanager_managers => node["redborder"]["managers_per_services"]["hadoop-resourcemanager"],
                  :cdomain => cdomain,
-                 :yarnMemory => yarnMemory)
+                 :yarnMemory => yarnMemory,
+                 :containersMemory => containersMemory)
        notifies node["redborder"]["services"]["hadoop-nodemanager"] ? :restart : :nothing, 'service[hadoop-nodemanager]', :delayed
        notifies node["redborder"]["services"]["hadoop-resourcemanager"] ? :restart : :nothing, 'service[hadoop-resourcemanager]', :delayed
     end
-
-    [ "configuration.xsl", "container-executor.cfg", "capacity-scheduler.xml", "hadoop_fair-scheduler.xml",
-      "hadoop-metrics.properties", "hadoop-metrics2.properties", "hadoop-policy.xml", "log4j.properties",
-      "mapred-queues.xml", "hadoop-env.sh", "mapred-env.sh", "yarn-env.sh" ].each do |t|
-    template "/opt/rb/etc/hadoop/#{t}" do
-        source "hadoop_#{t}.erb"
-        owner "root"
-        group "root"
-        cookbook "hadoop"
-        mode 0644
-        retries 2
-      end
-    end
-
     Chef::Log.info("Hadoop cookbook (common) has been processed")
   rescue => e
     Chef::Log.error(e.message)
@@ -110,17 +103,28 @@ end
 
 action :remove do
   begin
-    parent_config_dir = "/etc/hadoop"
-    parent_log_dir = new_resource.parent_log_dir
+    link_conf_folder = new_resource.link_conf_folder
+    log_parent_folder = new_resource.log_parent_folder
 
-    directory "#{parent_config_dir}" do
+    yum_package 'hadoop' do
+      action :remove
+    end
+
+    link link_conf_folder do
+      action :delete
+    end
+
+    directory log_parent_folder do
       recursive true
       action :delete
     end
 
-    # Remove parent log directory if it doesn't have childs
-    delete_if_empty(parent_log_dir)
-
+    directory "/var/lib/hadoop" do
+      recursive true
+      action :delete
+    end    
+ 
+  #TODO: Hadoop uninstall
     Chef::Log.info("Hadoop cookbook (common) has been processed")
   rescue => e
     Chef::Log.error(e.message)
