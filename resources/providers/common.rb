@@ -13,7 +13,7 @@ action :add do #Usually used to install and configure something
     log_parent_folder = new_resource.log_parent_folder
     cdomain = node["redborder"]["cdomain"]
     conf_folder = "/usr/lib/hadoop/etc/hadoop"
-    yarnMemory = (memory_kb * 0.75 / 1024).to_i #Yarn memory in megabytes
+    yarnMemory = (memory_kb * 0.85 / 1024).to_i #Yarn memory in megabytes
 
     ##########################
     #HADOOP INSTALLATION
