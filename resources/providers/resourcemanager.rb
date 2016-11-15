@@ -36,7 +36,7 @@ action :remove do
     log_dir = "#{parent_log_dir}/#{suffix_log_dir}"
 
     service "hadoop-resourcemanager" do
-      supports :status => true, :start => true, :restart => true, :reload => true
+      supports :status => true, :start => true, :restart => true
       action [:disable,:stop]
     end
     

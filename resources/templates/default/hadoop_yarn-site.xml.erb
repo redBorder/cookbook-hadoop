@@ -25,11 +25,11 @@ implied.
   </property>
   <property>
     <name>yarn.resourcemanager.bind-host</name>
-    <value>0.0.0.0</value>
+    <value>hadoop-resourcemanager.service</value>
   </property>
   <property>
     <name>yarn.nodemanager.bind-host</name>
-    <value>0.0.0.0</value>
+    <value><%= @name %>.node</value>
   </property>
 <% if @resourcemanager_managers.size > 1 %>
   <property>
@@ -97,7 +97,7 @@ implied.
   </property>
   <property>
     <name>yarn.nodemanager.resource.memory-mb</name>
-    <value><%= @yarnMemory.to_i %></value>
+    <value><%= @yarnMemory %></value>
   </property>
   <property>
     <name>yarn.nodemanager.aux-services</name>
@@ -164,9 +164,6 @@ implied.
     <name>yarn.resourcemanager.scheduler.class</name>
     <value>org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler</value>
   </property>
-  
-
-
   <property>
     <name>yarn.nodemanager.delete.debug-delay-sec</name>
     <value>600</value>
@@ -190,13 +187,11 @@ implied.
   <property>
     <name>yarn.nodemanager.log.retain-second</name>
     <value>604800</value>
-  </property>
-  
+  </property>  
   <property>
     <name>yarn.nodemanager.health-checker.script.timeout-ms</name>
     <value>60000</value>
-  </property>
-  
+  </property>  
   <property>
     <name>yarn.nodemanager.container-monitor.interval-ms</name>
     <value>3000</value>

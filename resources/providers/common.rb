@@ -7,12 +7,13 @@ action :add do #Usually used to install and configure something
   begin
     name = new_resource.name
     zookeeper_hosts = new_resource.zookeeper_hosts
-    yarnMemory = new_resource.yarnMemory
+    memory_kb = new_resource.memory_kb
     containersMemory = new_resource.containersMemory
     link_conf_folder = new_resource.link_conf_folder
     log_parent_folder = new_resource.log_parent_folder
     cdomain = node["redborder"]["cdomain"]
     conf_folder = "/usr/lib/hadoop/etc/hadoop"
+    yarnMemory = (memory_kb * 0.75 / 1024).to_i #Yarn memory in megabytes
 
     ##########################
     #HADOOP INSTALLATION
@@ -106,8 +107,11 @@ action :remove do
     link_conf_folder = new_resource.link_conf_folder
     log_parent_folder = new_resource.log_parent_folder
 
+    bash 'dummy-delay-hadoop-uninstall' do
+      notifies :remove, 'yum_package[hadoop]' , :delayed
+    end
     yum_package 'hadoop' do
-      action :remove
+      action :nothing
     end
 
     link link_conf_folder do
@@ -124,7 +128,6 @@ action :remove do
       action :delete
     end    
  
-  #TODO: Hadoop uninstall
     Chef::Log.info("Hadoop cookbook (common) has been processed")
   rescue => e
     Chef::Log.error(e.message)
