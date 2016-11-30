@@ -38,11 +38,6 @@ action :add do #Usually used to install and configure something
       action :nothing
     end
 
-    service "hadoop-zkfc" do
-      supports :status => true, :start => true, :restart => true, :reload => true
-      action :nothing
-    end
-
     ###################################
     # DIRECTORY STRUCTURE CREATION
     ##################################
@@ -97,7 +92,18 @@ action :add do #Usually used to install and configure something
        notifies node["redborder"]["services"]["hadoop-resourcemanager"] ? :restart : :nothing, 'service[hadoop-resourcemanager]', :delayed
     end
 
-    template "/etc/profile/hadoop.sh" do
+    template "#{conf_folder}/capacity-scheduler.xml" do
+       source "hadoop_capacity-scheduler.xml.erb"
+       owner "root"
+       group "root"
+       cookbook "hadoop"
+       mode 0644
+       retries 2
+       notifies node["redborder"]["services"]["hadoop-nodemanager"] ? :restart : :nothing, 'service[hadoop-nodemanager]', :delayed
+       notifies node["redborder"]["services"]["hadoop-resourcemanager"] ? :restart : :nothing, 'service[hadoop-resourcemanager]', :delayed
+    end
+
+    template "/etc/profile.d/hadoop.sh" do
        source "hadoop_profile.sh.erb"
        owner "root"
        group "root"
