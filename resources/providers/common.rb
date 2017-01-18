@@ -18,7 +18,7 @@ action :add do #Usually used to install and configure something
     ##########################
     #HADOOP INSTALLATION
     ##########################
-    
+
     yum_package "hadoop" do
       action :upgrade
       flush_cache [:before]
@@ -46,13 +46,13 @@ action :add do #Usually used to install and configure something
       to conf_folder
       link_type :symbolic
     end
- 
-    directory log_parent_folder do 
+
+    directory log_parent_folder do
       owner "hadoop"
       group "hadoop"
       mode 0755
     end
- 
+
     directory "/var/lib/hadoop" do
       owner "hadoop"
       group "hadoop"
@@ -124,27 +124,27 @@ action :remove do
     link_conf_folder = new_resource.link_conf_folder
     log_parent_folder = new_resource.log_parent_folder
 
-    bash 'dummy-delay-hadoop-uninstall' do
-      notifies :remove, 'yum_package[hadoop]' , :delayed
-    end
-    yum_package 'hadoop' do
-      action :nothing
-    end
+    #bash 'dummy-delay-hadoop-uninstall' do
+    #  notifies :remove, 'yum_package[hadoop]' , :delayed
+    #end
+    #yum_package 'hadoop' do
+    #  action :nothing
+    #end
 
-    link link_conf_folder do
-      action :delete
-    end
+    #link link_conf_folder do
+    #  action :delete
+    #end
 
-    directory log_parent_folder do
-      recursive true
-      action :delete
-    end
+    #directory log_parent_folder do
+    #  recursive true
+    #  action :delete
+    #end
 
-    directory "/var/lib/hadoop" do
-      recursive true
-      action :delete
-    end    
- 
+    #directory "/var/lib/hadoop" do
+    #  recursive true
+    #  action :delete
+    #end
+
     Chef::Log.info("Hadoop cookbook (common) has been processed")
   rescue => e
     Chef::Log.error(e.message)

@@ -17,7 +17,7 @@ action :add do
        variables(:memory_kb => memory_kb)
        notifies :restart, 'service[hadoop-resourcemanager]', :delayed
      end
-     
+
      service "hadoop-resourcemanager" do
        supports :status => true, :start => true, :restart => true, :reload => true
        action [:enable,:start]
@@ -39,12 +39,12 @@ action :remove do
       supports :status => true, :start => true, :restart => true
       action [:disable,:stop]
     end
-    
+
     # Cleaning log directory
-    directory log_dir do
-      action :delete
-      recursive true
-    end
+    #directory log_dir do
+    #  action :delete
+    #  recursive true
+    #end
 
     Chef::Log.info("Hadoop ResourceManager cookbook has been processed")
   rescue => e

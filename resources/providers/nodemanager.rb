@@ -8,12 +8,12 @@ action :add do
      memory_kb = new_resource.memory_kb
      log_parent_folder = new_resource.log_parent_folder
      log_folder = "#{log_parent_folder}/nodemanager"
-     
+
      directory log_folder do
        owner "hadoop"
        group "hadoop"
        mode 0755
-     end       
+     end
 
      template "/etc/sysconfig/hadoop_nodemanager" do
        source "hadoop_nodemanager_sysconfig.erb"
@@ -48,10 +48,10 @@ action :remove do
     end
 
     # removing log directory
-    directory log_folder do
-      action :delete
-      recursive true
-    end
+    #directory log_folder do
+    #  action :delete
+    #  recursive true
+    #end
 
     Chef::Log.info("Hadoop cookbook (nodemanager) has been processed")
   rescue => e
