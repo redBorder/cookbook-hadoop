@@ -19,7 +19,7 @@ action :add do #Usually used to install and configure something
     #HADOOP INSTALLATION
     ##########################
 
-    yum_package "hadoop" do
+    dnf_package "hadoop" do
       action :upgrade
       flush_cache [:before]
     end
@@ -125,9 +125,9 @@ action :remove do
     log_parent_folder = new_resource.log_parent_folder
 
     #bash 'dummy-delay-hadoop-uninstall' do
-    #  notifies :remove, 'yum_package[hadoop]' , :delayed
+    #  notifies :remove, 'dnf_package[hadoop]' , :delayed
     #end
-    #yum_package 'hadoop' do
+    #dnf_package 'hadoop' do
     #  action :nothing
     #end
 
