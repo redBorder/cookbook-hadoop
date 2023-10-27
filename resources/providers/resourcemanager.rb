@@ -67,7 +67,7 @@ action :register do
          action :nothing
       end.run_action(:run)
 
-      node.set["hadoop"]["resourcemanager"]["registered"] = true
+      node.normal["hadoop"]["resourcemanager"]["registered"] = true
       Chef::Log.info("Hadoop ResourceManager service has been registered to consul")
     end
   rescue => e
@@ -83,7 +83,7 @@ action :deregister do
         action :nothing
       end.run_action(:run)
 
-      node.set["hadoop"]["resourcemanager"]["registered"] = false
+      node.normal["hadoop"]["resourcemanager"]["registered"] = false
       Chef::Log.info("Hadoop ResourceManager service has been deregistered from consul")
     end
   rescue => e
